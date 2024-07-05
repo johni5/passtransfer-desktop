@@ -1,0 +1,7 @@
+.idea/
+*.iml
+out/data/
+out/lib/
+out/log/
+target/
+/out/ptdt-launcher-1.0-SNAPSHOT.jar
