@@ -2,7 +2,7 @@
 <launch4jConfig>
   <dontWrapJar>false</dontWrapJar>
   <headerType>gui</headerType>
-  <jar>..\..\out\ptdt-launcher-1.0.jar</jar>
+  <jar>..\..\out\ptdt-launcher-1.0-SNAPSHOT.jar</jar>
   <outfile>..\..\out\passtW.exe</outfile>
   <errTitle></errTitle>
   <cmdLine></cmdLine>

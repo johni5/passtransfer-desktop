@@ -43,16 +43,11 @@ public class ConnectionManager {
         HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build();
         httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString()).
                 thenAccept(r -> {
-                    if (!Strings.isNullOrEmpty(r.body())) {
+                    if (r.statusCode() == 200) {
                         listener.connected(r.body());
                     } else {
-                        listener.error("Empty result");
+                        listener.error(String.format("Code: %s -> %s", r.statusCode(), r.body()));
                     }
-//            if (r.statusCode() == 200) {
-//                listener.connected(r.body());
-//            } else {
-//                listener.error(String.format("Code: %s -> %s", r.statusCode(), r.body()));
-//            }
                 }).whenComplete((v, t) -> {
             if (t != null) {
                 listener.error("Exception: " + t.getMessage());

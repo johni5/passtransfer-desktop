@@ -11,12 +11,14 @@ import io.socket.client.IO;
 import io.socket.client.Socket;
 import org.apache.log4j.Logger;
 
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.WindowEvent;
-import java.net.URLDecoder;
+import java.net.URL;
 import java.util.Locale;
 
 /**
@@ -37,6 +39,7 @@ public class MainFrame extends JFrame implements ConnectionListener {
         initWindow();
         initMenu();
         pack();
+        reconnect();
     }
 
     public void exit() {
@@ -61,10 +64,8 @@ public class MainFrame extends JFrame implements ConnectionListener {
         JMenuItem menuItemSettings = new JMenuItem("Параметры");
         menuItemConnect = new JMenuItem("Подключение");
         JMenuItem menuItemExit = new JMenuItem("Выход");
-        menuItemExit.addActionListener(a -> dispatchEvent(new WindowEvent(MainFrame.this, WindowEvent.WINDOW_CLOSING)));
-        menuItemConnect.addActionListener(a -> {
-            reconnect();
-        });
+        menuItemExit.addActionListener(a -> exit());
+        menuItemConnect.addActionListener(a -> reconnect());
         menuItemSettings.addActionListener(ae -> {
         });
         menuFile.add(menuItemConnect);
@@ -107,8 +108,7 @@ public class MainFrame extends JFrame implements ConnectionListener {
             if (socket == null) {
                 String url = WSUtils.getHttpUrl();
                 logger.info("WS connection to " + url);
-                IO.Options options = IO.Options.builder()
-                        .build();
+                IO.Options options = IO.Options.builder().build();
                 socket = IO.socket(url, options).open();
                 socket.on(Socket.EVENT_CONNECT, o -> {
                     logger.info("WS connected ");
@@ -123,7 +123,8 @@ public class MainFrame extends JFrame implements ConnectionListener {
                         logger.error(e.getMessage(), e);
                     }
                 }).on(Socket.EVENT_CONNECT_ERROR, o -> {
-                    logger.info("WS connection error " + o);
+                    logger.warn("WS connection error");
+                    disconnected();
                 }).on(Socket.EVENT_DISCONNECT, o -> {
                     logger.info("WS disconnected ");
                     disconnected();
@@ -141,7 +142,7 @@ public class MainFrame extends JFrame implements ConnectionListener {
                         logger.info(msg);
                         message(msg);
                     }
-                }).emit("check", _cid);
+                }).emit("register", _cid);
             }
         } catch (Throwable e) {
             logger.error(e.getMessage(), e);
@@ -157,6 +158,7 @@ public class MainFrame extends JFrame implements ConnectionListener {
     @Override
     public void notyfyApp(String name) {
         qrViewPanel.connectApp(name);
+        playSound();
     }
 
     @Override
@@ -167,6 +169,7 @@ public class MainFrame extends JFrame implements ConnectionListener {
                 StringSelection stringSelection = new StringSelection(v);
                 Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
                 clipboard.setContents(stringSelection, null);
+                playSound();
             } catch (Exception e) {
                 logger.error(e.getMessage(), e);
             }
@@ -177,6 +180,8 @@ public class MainFrame extends JFrame implements ConnectionListener {
     public void disconnected() {
         menuItemConnect.setEnabled(true);
         qrViewPanel.disconnect();
+        socket = null;
+        reconnect();
     }
 
     @Override
@@ -184,5 +189,18 @@ public class MainFrame extends JFrame implements ConnectionListener {
         menuItemConnect.setEnabled(true);
         qrViewPanel.disconnect();
         logger.error("Connection error: " + msg);
+        socket = null;
+    }
+
+    public void playSound() {
+        try {
+            URL f = getClass().getResource("/mp3/pass.wav");
+            Clip clip = AudioSystem.getClip();
+            AudioInputStream inputStream = AudioSystem.getAudioInputStream(f);
+            clip.open(inputStream);
+            clip.start();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
     }
 }
